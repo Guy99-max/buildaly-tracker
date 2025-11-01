@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+body { direction: rtl; }
+.badge { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium; }
+.badge-blue { @apply bg-devBlue/10 text-devBlue; }
+.badge-orange { @apply bg-execOrange/10 text-orange-800; }
+.badge-gray { @apply bg-zinc-100 text-zinc-600; }

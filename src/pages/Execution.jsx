@@ -19,9 +19,22 @@ function Drawer({project, onClose}){
   const pricePerApt = (form.offer && form.apartments>0) ? Math.round(form.offer/form.apartments).toLocaleString() : '—'
 
   async function save(){
-    const ref = doc(db,'executions', form.id)
-    await setDoc(ref, { ...form, eq, updatedAt: Date.now() }, { merge:true })
-    onClose()
+    try {
+      if (!form.id) {
+        console.error('Missing form.id, form =', form)
+        alert('לא נמצא מזהה לפרויקט (id), אי אפשר לשמור.')
+        return
+      }
+
+      const ref = doc(db,'executions', form.id)
+      const payload = { ...form, eq, updatedAt: Date.now() }
+
+      await setDoc(ref, payload, { merge:true })
+      onClose()
+    } catch (err) {
+      console.error('Error saving execution project:', err)
+      alert('אירעה שגיאה בשמירה. פתח Console בדפדפן ותראה את פרטי השגיאה.')
+    }
   }
 
   return (
@@ -34,7 +47,13 @@ function Drawer({project, onClose}){
           <h2 className="text-lg font-semibold truncate">
             {form.name || 'ללא שם'}
           </h2>
-          <button className="text-zinc-500 hover:text-black" onClick={onClose}>סגור</button>
+          <button
+            type="button"
+            className="text-zinc-500 hover:text-black"
+            onClick={onClose}
+          >
+            סגור
+          </button>
         </div>
 
         <div className="mt-4 grid gap-4">
@@ -53,7 +72,7 @@ function Drawer({project, onClose}){
               <label className="text-xs">סטטוס</label>
               <select
                 className="w-full border rounded-lg px-2 py-1.5"
-                value={form.status||''}
+                value={form.status||STATUS[0]}
                 onChange={e=>setForm({...form,status:e.target.value})}
               >
                 {STATUS.map(s=><option key={s}>{s}</option>)}
@@ -63,7 +82,7 @@ function Drawer({project, onClose}){
               <label className="text-xs">סוג</label>
               <select
                 className="w-full border rounded-lg px-2 py-1.5"
-                value={form.kind||''}
+                value={form.kind||TYPES[0]}
                 onChange={e=>setForm({...form,kind:e.target.value})}
               >
                 {TYPES.map(s=><option key={s}>{s}</option>)}
@@ -241,8 +260,20 @@ function Drawer({project, onClose}){
           </div>
 
           <div className="flex gap-2">
-            <button className="px-4 py-2 rounded-lg bg-black text-white" onClick={save}>שמירה</button>
-            <button className="px-4 py-2 rounded-lg bg-zinc-100" onClick={onClose}>בטל</button>
+            <button
+              type="button"
+              className="px-4 py-2 rounded-lg bg-black text-white"
+              onClick={save}
+            >
+              שמירה
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 rounded-lg bg-zinc-100"
+              onClick={onClose}
+            >
+              בטל
+            </button>
           </div>
         </div>
       </div>
@@ -271,14 +302,19 @@ export default function Execution(){
   },[items,filter])
 
   async function addNew(){
-    const payload = {
-      name:'פרויקט חדש',
-      status:'מכרז פתוח',
-      kind:'תמ״א 1',
-      createdAt: Date.now()
+    try {
+      const payload = {
+        name:'פרויקט חדש',
+        status:'מכרז פתוח',
+        kind:'תמ״א 1',
+        createdAt: Date.now()
+      }
+      const ref = await addDoc(collection(db,'executions'), payload)
+      setOpen({ id: ref.id, ...payload })
+    } catch (err) {
+      console.error('Error creating new execution project:', err)
+      alert('שגיאה ביצירת פרויקט חדש. ראה פרטים ב-Console.')
     }
-    const ref = await addDoc(collection(db,'executions'), payload)
-    setOpen({ id: ref.id, ...payload })
   }
 
   return (
@@ -308,6 +344,7 @@ export default function Execution(){
               {TYPES.map(s=><option key={s}>{s}</option>)}
             </select>
             <button
+              type="button"
               className="px-4 py-2 rounded-lg bg-execOrange text-white whitespace-nowrap"
               onClick={addNew}
             >
